@@ -136,3 +136,8 @@ class LeNetModel:
         total_accuracy = 100.0 * float(total_correct_count) / float(np.sum(cm))
         print(report_str)
         print("Total Accuracy:{0:.5f}".format(total_accuracy))
+
+    def save_model(self, sess):
+        saver = tf.train.Saver()
+        save_path = saver.save(sess, "model.ckpt")
+
