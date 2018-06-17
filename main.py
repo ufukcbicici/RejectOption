@@ -1,9 +1,11 @@
 from data_handling.dataset_types import DatasetTypes
 import tensorflow as tf
+import numpy as np
 from data_handling.mnist_dataset import MnistDataset
 from global_params import GlobalParams
 from model.model import LeNetModel
 
+np.random.seed(seed=GlobalParams.RANDOM_SEED)
 mnist_dataset = MnistDataset()
 mnist_dataset.load_dataset(test_set_count=1000)
 mnist_dataset.set_batch_size(batch_size=GlobalParams.MINIBATCH_SIZE)

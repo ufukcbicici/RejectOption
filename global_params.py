@@ -6,5 +6,6 @@ class GlobalParams:
     INITIAL_LR = 0.01
     DECAY_RATE = 0.5
     DECAY_PERIOD = 12800
+    RANDOM_SEED = 42
 
 
