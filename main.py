@@ -27,5 +27,5 @@ if var_str == "1":
     model.train_model(sess=sess)
 elif var_str == "2":
     model.load_model(sess=sess)
-    model.evaluate_mode(sess=sess, dataset_type=DatasetTypes.test, is_training=False)
+    model.evaluate_model(sess=sess, dataset_type=DatasetTypes.test, is_training=False)
 

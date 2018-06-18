@@ -88,14 +88,14 @@ class LeNetModel:
                 if self.dataset.isNewEpoch:
                     print("Iteration:{0}".format(iteration))
                     # Check the training and test accuracies
-                    self.evaluate_mode(sess=sess, dataset_type=DatasetTypes.training, is_training=True)
-                    self.evaluate_mode(sess=sess, dataset_type=DatasetTypes.test, is_training=True)
+                    self.evaluate_model(sess=sess, dataset_type=DatasetTypes.training, is_training=True)
+                    self.evaluate_model(sess=sess, dataset_type=DatasetTypes.test, is_training=True)
                     break
         print("Iteration:{0}".format(iteration))
         if GlobalParams.SAVE_MODEL:
             self.save_model(sess=sess)
 
-    def evaluate_mode(self, sess, dataset_type, is_training):
+    def evaluate_model(self, sess, dataset_type, is_training):
         label_count = self.dataset.get_label_count()
         self.dataset.set_current_data_set_type(dataset_type=dataset_type)
         self.dataset.set_batch_size(batch_size=GlobalParams.EVAL_MINIBATCH_SIZE)
