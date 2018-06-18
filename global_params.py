@@ -7,5 +7,9 @@ class GlobalParams:
     DECAY_RATE = 0.5
     DECAY_PERIOD = 12800
     RANDOM_SEED = 42
+    SAVE_MODEL = True
+    FPR_MAX = 0.015
+    TEMPERATURE = 3.0
+    SEARCH_STEP_SIZE = 1
 
 
