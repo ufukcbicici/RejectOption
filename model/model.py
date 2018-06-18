@@ -136,8 +136,7 @@ class LeNetModel:
         if not is_training:
             # Apply decision strategy
             self.apply_decision_strategy(posterior_matrix=posterior_matrix,
-                                         true_labels_matrix=true_labels_matrix,
-                                         dataset_type=dataset_type)
+                                         true_labels=true_labels_matrix)
 
     def save_model(self, sess):
         saver = tf.train.Saver()
@@ -170,27 +169,31 @@ class LeNetModel:
         print(report_str)
         return fpr_list
 
-    # A binary search on the test set to find the optimum threshold on the posterior probabilities, satisfying the
-    # given FPR per class
-    def apply_decision_strategy(self, posterior_matrix, true_labels_matrix, dataset_type):
+    # A search on the test set to find the optimum threshold on the posterior probabilities, satisfying the
+    # given FPR limit per class
+    def apply_decision_strategy(self, posterior_matrix, true_labels):
         total_count = posterior_matrix.shape[0]
         max_posteriors = np.max(posterior_matrix, axis=1)
+        predicted_labels = np.argmax(posterior_matrix, axis=1)
         sorting_indices = np.argsort(max_posteriors)
-        sorted_max_posteriors = max_posteriors[sorting_indices]
         best_coverage = 0.0
         best_threshold = None
         curr_index = 0
+        # Build the confusion matrix without rejection
+        confusion_matrix = np.zeros(shape=(posterior_matrix.shape[1], posterior_matrix.shape[1]))
+        for i in range(total_count):
+            predicted_label = predicted_labels[i]
+            true_label = true_labels[i]
+            confusion_matrix[(predicted_label, true_label)] += 1
+        # Find a suitable cutoff threshold.
         while curr_index < total_count:
-            curr_posterior_threshold = sorted_max_posteriors[curr_index]
-            # Calculate confusion matrix wrt the new posterior threshold
-            confusion_matrix = np.zeros(shape=(posterior_matrix.shape[1], posterior_matrix.shape[1]))
-            i = curr_index
-            while i < total_count:
-                posterior = posterior_matrix[sorting_indices[i], :]
-                predicted_label = np.argmax(posterior, axis=0)
-                true_label = true_labels_matrix[sorting_indices[i]]
-                confusion_matrix[(predicted_label, true_label)] += 1
-                i += 1
+            # Remove all predictions between [curr_index - SEARCH_STEP_SIZE, curr_index) from the confusion matrix.
+            if curr_index - GlobalParams.SEARCH_STEP_SIZE >= 0:
+                for remove_index in range(curr_index - GlobalParams.SEARCH_STEP_SIZE, curr_index):
+                    predicted_label = predicted_labels[sorting_indices[remove_index]]
+                    true_label = true_labels[sorting_indices[remove_index]]
+                    confusion_matrix[(predicted_label, true_label)] -= 1
+            curr_posterior_threshold = max_posteriors[sorting_indices[curr_index]]
             # Total Multi-Class Accuracy and Coverage
             total_correct = np.trace(confusion_matrix)
             total_predicted = np.sum(confusion_matrix)
@@ -198,6 +201,7 @@ class LeNetModel:
             coverage = 100.0 * float(total_predicted) / float(total_count)
             print("Overall Accuracy:{0}%".format(overall_accuracy))
             print("Coverage:{0}%".format(coverage))
+            # Get TPR and FPR from the new confusion matrix.
             fpr_list = self.analyze_confusion_matrix(cm=confusion_matrix)
             does_satisfy_fpr_limit = np.all([fpr <= GlobalParams.FPR_MAX for fpr in fpr_list])
             if does_satisfy_fpr_limit:
@@ -205,6 +209,7 @@ class LeNetModel:
                 if coverage > best_coverage:
                     best_coverage = coverage
                     best_threshold = curr_posterior_threshold
+                break
             curr_index += GlobalParams.SEARCH_STEP_SIZE
         if best_coverage > 0:
             print("Best Coverage is:{0}".format(best_coverage))
